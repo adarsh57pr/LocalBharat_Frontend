@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useLocation, useNavigate} from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const ProductCreate = () => {
-  const location = useLocation();
-   let stateData = location.state
-   console.log(stateData)
-  //  setProduct(stateData)
   const navigate = useNavigate();
+  const location = useLocation();
+  const editProduct = location.state?.product;
+
+  const [previewImages, setPreviewImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [product, setProduct] = useState({
     name: '',
     description: '',
@@ -23,9 +25,35 @@ const ProductCreate = () => {
     isBlessed: false,
     benefits: ''
   });
-//   console.log(product)
-  const [previewImages, setPreviewImages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize form when component mounts or editProduct changes
+  useEffect(() => {
+    if (editProduct) {
+      setIsEditMode(true);
+      setProduct({
+        name: editProduct.name,
+        description: editProduct.description,
+        price: editProduct.price.toString(),
+        category: editProduct.category,
+        mukhiCount: editProduct.mukhiCount.toString(),
+        origin: editProduct.origin,
+        size: editProduct.size,
+        color: editProduct.color,
+        images: editProduct.images,
+        stock: editProduct.stock.toString(),
+        isBlessed: editProduct.isBlessed || false,
+        benefits: editProduct.benefits
+      });
+      
+      // Set preview images for existing product images
+      if (editProduct.images && editProduct.images.length > 0) {
+        setPreviewImages(editProduct.images.map(img => ({
+          preview: img,
+          isExisting: true // Mark existing images from server
+        })));
+      }
+    }
+  }, [editProduct]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -37,15 +65,16 @@ const ProductCreate = () => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    
+
     if (files.length + previewImages.length > 5) {
-      toast.error('error', 'You can upload a maximum of 5 images');
+      toast.error('You can upload a maximum of 5 images');
       return;
     }
 
     const newPreviewImages = files.map(file => ({
       file,
-      preview: URL.createObjectURL(file)
+      preview: URL.createObjectURL(file),
+      isExisting: false
     }));
 
     setPreviewImages(prev => [...prev, ...newPreviewImages]);
@@ -53,7 +82,10 @@ const ProductCreate = () => {
 
   const removeImage = (index) => {
     const newPreviewImages = [...previewImages];
-    URL.revokeObjectURL(newPreviewImages[index].preview);
+    // Only revoke object URL if it's not an existing image
+    if (!newPreviewImages[index].isExisting) {
+      URL.revokeObjectURL(newPreviewImages[index].preview);
+    }
     newPreviewImages.splice(index, 1);
     setPreviewImages(newPreviewImages);
   };
@@ -67,55 +99,69 @@ const ProductCreate = () => {
     const missingFields = requiredFields.filter(field => !product[field]);
 
     if (missingFields.length > 0) {
-      toast.error('error', `Please fill in all required fields: ${missingFields.join(', ')}`);
+      toast.error(`Please fill in all required fields: ${missingFields.join(', ')}`);
       setIsLoading(false);
       return;
     }
 
     if (previewImages.length === 0) {
-      toast.error('error', 'Please upload at least one image');
+      toast.error('Please upload at least one image');
       setIsLoading(false);
       return;
     }
 
     try {
-      // First upload images
+      // Prepare form data for image upload
       const formData = new FormData();
+      
+      // Only append new files (not existing images)
       previewImages.forEach(image => {
-        formData.append('images', image.file);
+        if (!image.isExisting && image.file) {
+          formData.append('images', image.file);
+        }
       });
 
-      // Then create product with image URLs
+      // Prepare product data
       const productData = {
         ...product,
         price: parseFloat(product.price),
         mukhiCount: parseInt(product.mukhiCount),
         stock: parseInt(product.stock),
-        images: previewImages.map(img => img.preview) // In a real app, you'd upload to cloud storage first
+        // Combine existing image URLs and new ones
+        images: previewImages.map(img => img.isExisting ? img.preview : img.file.name)
       };
-console.log(productData)
-      const response = await axios.post('http://localhost:8000/products/createProduct', productData);
-console.log(response.data)
-      toast.success('success', 'Product created successfully!');
+
+      if (isEditMode) {
+        // Update existing product
+        await axios.patch(`http://localhost:8000/products/updateProduct/${editProduct._id}`, productData);
+        toast.success('Product updated successfully!');
+      } else {
+        // Create new product
+        await axios.post('http://localhost:8000/products/createProduct', productData);
+        toast.success('Product created successfully!');
+      }
+
       setTimeout(() => navigate('/productDetails'), 2000);
     } catch (error) {
-      console.error('Error creating product:', error);
-      toast.error('error', error.response?.data?.msg || 'Error creating product');
-    } finally {
+      console.error('Error:', error);
+      toast.error(error.response?.data?.msg || `Error ${isEditMode ? 'updating' : 'creating'} product`);
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-gray-100 mt-12 min-h-screen py-8">
+    <div className="bg-gray-100 min-h-screen mt-14 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 py-4 px-6">
-          <h1 className="text-2xl font-bold text-white">Add New Product</h1>
-          <p className="text-blue-100">Add a new Rudraksha product to your inventory</p>
+          <h1 className="text-2xl font-bold text-white">
+            {isEditMode ? 'Update Product' : 'Add New Product'}
+          </h1>
+          <p className="text-blue-100">
+            {isEditMode ? 'Update this product in your inventory' : 'Add a new product to your inventory'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-      
           {/* Basic Information Section */}
           <div className="border-b border-gray-200 pb-6">
             <h2 className="text-lg font-medium text-gray-900">Basic Information</h2>
@@ -130,7 +176,7 @@ console.log(response.data)
                   id="name"
                   value={product.name}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                   required
                 />
               </div>
@@ -144,7 +190,7 @@ console.log(response.data)
                   name="category"
                   value={product.category}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                   required
                 >
                   <option value="">Select a category</option>
@@ -166,7 +212,7 @@ console.log(response.data)
                   rows={3}
                   value={product.description}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                   required
                 />
               </div>
@@ -189,7 +235,7 @@ console.log(response.data)
                   onChange={handleChange}
                   min="0"
                   step="0.01"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                   required
                 />
               </div>
@@ -205,7 +251,7 @@ console.log(response.data)
                   value={product.mukhiCount}
                   onChange={handleChange}
                   min="1"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                   required
                 />
               </div>
@@ -221,7 +267,7 @@ console.log(response.data)
                   value={product.stock}
                   onChange={handleChange}
                   min="0"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                   required
                 />
               </div>
@@ -236,7 +282,7 @@ console.log(response.data)
                   id="origin"
                   value={product.origin}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                   required
                 />
               </div>
@@ -251,7 +297,7 @@ console.log(response.data)
                   id="color"
                   value={product.color}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                   required
                 />
               </div>
@@ -266,7 +312,7 @@ console.log(response.data)
                   id="size"
                   value={product.size}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                   required
                 />
               </div>
@@ -297,7 +343,7 @@ console.log(response.data)
                   rows={3}
                   value={product.benefits}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                   required
                 />
               </div>
@@ -308,39 +354,37 @@ console.log(response.data)
           <div>
             <h2 className="text-lg font-medium text-gray-900">Product Images</h2>
             <p className="mt-1 text-sm text-gray-500">Upload high-quality images of your product (max 5 images)</p>
-            
+
             <div className="mt-4">
-              <div className="file-upload relative inline-block">
-                <button
-                  type="button"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                  Choose Files
-                </button>
+              <label className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer">
+                <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                Choose Files
                 <input
-                  id="file-upload"
-                  name="file-upload"
                   type="file"
-                  className="file-upload-input absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="hidden"
                   multiple
                   accept="image/*"
                   onChange={handleImageUpload}
                 />
-              </div>
-              
-              <div className="preview-container mt-4">
+              </label>
+
+              <div className="mt-4 flex flex-wrap gap-4">
                 {previewImages.map((image, index) => (
-                  <div key={index} className="image-container">
-                    <img src={image.preview} alt={`Preview ${index}`} className="preview-image" />
-                    <span 
-                      className="remove-image"
+                  <div key={index} className="relative w-32 h-32">
+                    <img 
+                      src={image.preview} 
+                      alt={`Preview ${index}`} 
+                      className="w-full h-full object-cover rounded border border-gray-200"
+                    />
+                    <button
+                      type="button"
                       onClick={() => removeImage(index)}
+                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center transform translate-x-1/2 -translate-y-1/2 hover:bg-red-600"
                     >
                       ×
-                    </span>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -367,9 +411,11 @@ console.log(response.data)
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Creating...
+                  {isEditMode ? 'Updating...' : 'Creating...'}
                 </>
-              ) : 'Add Product'}
+              ) : (
+                isEditMode ? 'Update Product' : 'Add Product'
+              )}
             </button>
           </div>
         </form>

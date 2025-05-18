@@ -15,7 +15,6 @@ import Register from './pages/Register';
 import Checkout from './pages/Checkout';
 import ProductCreate from './admin/productCreate';
 import ProductDetails from './admin/ProductDetails';
-import ProductEdit from './admin/ProductEdit';
 import CartPage from './pages/CartPage';
 import ForgetPassword from './pages/ForgetPassword';
 
@@ -37,7 +36,6 @@ function App() {
           <Route path='/checkout' element={<Checkout />} />
           <Route path='/productCreate' element={<ProductCreate />} />
           <Route path='/productDetails' element={<ProductDetails />} />
-          <Route path='/productUpdate' element={<ProductEdit />} />
           <Route path='/forgetpassword' element={<ForgetPassword />} />
         </Routes>
         <ToastContainer/>

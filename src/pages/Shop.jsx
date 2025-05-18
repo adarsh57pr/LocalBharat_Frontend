@@ -1,66 +1,88 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom'; // For navigation (if using React Router)
+import { addToCart } from '../redux/CartSlice';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const Shop = () => {
+    const dispatch = useDispatch()
+
     // Sample product data (replace with your actual data or fetch from an API)
-    const products = [
-        {
-            id: 1,
-            name: '1 Mukhi Rudraksha',
-            price: '$199',
-            image: 'Rudreaksha_Photos/one-mukhi-rudraksha.png',
-            description: 'For ultimate peace and enlightenment.',
-        },
-        {
-            id: 2,
-            name: '5 Mukhi Rudraksha',
-            price: '$99',
-            image: 'Rudreaksha_Photos/5mukhi1-photoroom-500x500.webp',
-            description: 'For health, wealth, and prosperity.',
-        },
-        {
-            id: 3,
-            name: '7 Mukhi Rudraksha',
-            price: '$149',
-            image: 'Rudreaksha_Photos/7 mukhi.jpg',
-            description: 'For success and overcoming obstacles.',
-        },
-        {
-            id: 4,
-            name: '14 Mukhi Rudraksha',
-            price: '$299',
-            image: 'Rudreaksha_Photos/14 mukhi.jpg',
-            description: 'For divine blessings and protection.',
-        },
-        {
-            id: 5,
-            name: 'Rudraksha Mala',
-            price: '$79',
-            image: 'Rudreaksha_Photos/5mukhi1-photoroom-500x500.webp',
-            description: 'Handcrafted mala for meditation and spiritual growth.',
-        },
-        {
-            id: 6,
-            name: 'Rudraksha Bracelet',
-            price: '$49',
-            image: 'Rudreaksha_Photos/HomeMade.jpg',
-            description: 'Elegant bracelet for daily wear and positive energy.',
-        },
-        {
-            id: 7,
-            name: 'Rudraksha Pendant',
-            price: '$89',
-            image: 'Rudreaksha_Photos/goldenCap.jpg',
-            description: 'Stylish pendant for spiritual and fashion purposes.',
-        },
-        {
-            id: 8,
-            name: 'Rudraksha Kada',
-            price: '$69',
-            image: 'Rudreaksha_Photos/braceleteKada.jpg',
-            description: 'Stylish Kada for spiritual and fashion purposes.',
-        },
-    ];
+    // const products = [
+    //     {
+    //         id: 1,
+    //         name: '1 Mukhi Rudraksha',
+    //         price: '$199',
+    //         image: 'Rudreaksha_Photos/one-mukhi-rudraksha.png',
+    //         description: 'For ultimate peace and enlightenment.',
+    //     },
+    //     {
+    //         id: 2,
+    //         name: '5 Mukhi Rudraksha',
+    //         price: '$99',
+    //         image: 'Rudreaksha_Photos/5mukhi1-photoroom-500x500.webp',
+    //         description: 'For health, wealth, and prosperity.',
+    //     },
+    //     {
+    //         id: 3,
+    //         name: '7 Mukhi Rudraksha',
+    //         price: '$149',
+    //         image: 'Rudreaksha_Photos/7 mukhi.jpg',
+    //         description: 'For success and overcoming obstacles.',
+    //     },
+    //     {
+    //         id: 4,
+    //         name: '14 Mukhi Rudraksha',
+    //         price: '$299',
+    //         image: 'Rudreaksha_Photos/14 mukhi.jpg',
+    //         description: 'For divine blessings and protection.',
+    //     },
+    //     {
+    //         id: 5,
+    //         name: 'Rudraksha Mala',
+    //         price: '$79',
+    //         image: 'Rudreaksha_Photos/5mukhi1-photoroom-500x500.webp',
+    //         description: 'Handcrafted mala for meditation and spiritual growth.',
+    //     },
+    //     {
+    //         id: 6,
+    //         name: 'Rudraksha Bracelet',
+    //         price: '$49',
+    //         image: 'Rudreaksha_Photos/HomeMade.jpg',
+    //         description: 'Elegant bracelet for daily wear and positive energy.',
+    //     },
+    //     {
+    //         id: 7,
+    //         name: 'Rudraksha Pendant',
+    //         price: '$89',
+    //         image: 'Rudreaksha_Photos/goldenCap.jpg',
+    //         description: 'Stylish pendant for spiritual and fashion purposes.',
+    //     },
+    //     {
+    //         id: 8,
+    //         name: 'Rudraksha Kada',
+    //         price: '$69',
+    //         image: 'Rudreaksha_Photos/braceleteKada.jpg',
+    //         description: 'Stylish Kada for spiritual and fashion purposes.',
+    //     },
+    // ];
+
+    const [allProducts, setAllProducts] = useState([])
+
+    const products = async ()=>{
+        try {
+            const res = await axios.get('http://localhost:8000/products/getAllProducts')
+            //  console.log(res.data.products)
+             setAllProducts(res.data.products)
+        } catch (error) {
+            toast.error(error.res?.data?.msg || 'Error fetching products');
+        }
+    }
+
+    useEffect(()=>{
+        products()
+    },[])
 
     return (
         <div className="font-sans mt-16">
@@ -83,9 +105,11 @@ const Shop = () => {
                         Our Products
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {products.map((product) => (
-                            <div
+                        {allProducts.map((product) => (
+                            <Link
+                                to={'/viewDetails'}
                                 key={product.id}
+                                style={{boxShadow:'21px 21px 22px #fb913c'}}
                                 className="bg-gradient-to-r from-orange-100 to-orange-200 hover:scale-105 hover:shadow-2xl shadow-orange-500 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition duration-300"
                             >
                                 <img
@@ -96,17 +120,20 @@ const Shop = () => {
                                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
                                     {product.name}
                                 </h3>
-                                <p className="text-gray-600 mb-4">{product.description}</p>
+                                {/* <p className="text-gray-600 mb-4">{product.description}</p> */}
                                 <p className="text-xl font-bold text-gray-800 mb-4">
                                     {product.price}
                                 </p>
-                                <Link
-                                    to={`/viewDetails`} // Replace with your product detail route
-                                    className="bg-green-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-green-600 transition duration-300"
+                                <button
+                                   onClick={(e) => {
+                                    e.preventDefault(); // Prevent navigation when clicking button
+                                    dispatch(addToCart(product));
+                                  }}
+                                    className="bg-teal-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-teal-500 transition duration-300"
                                 >
-                                    View Details
-                                </Link>
-                            </div>
+                                    Add To Cart
+                                </button>
+                            </Link>
                         ))}
                     </div>
                 </div>

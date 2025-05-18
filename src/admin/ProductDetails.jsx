@@ -41,10 +41,8 @@ const ProductDetails = () => {
   };
 
   const handleUpdate = async (product)=>{
-    navigate('/productCreate',{
-      state: { product }
-    });
-
+    console.log(product)
+    navigate('/productCreate',{state:{product}});
   }
 
   if (isLoading) {

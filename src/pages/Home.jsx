@@ -1,13 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { userDetail } from '../redux/UserSlice';
 
 
 
 const Home = () => {
+const storeData = useSelector((state)=>state.user)
+console.log(storeData)
+const dispatch = useDispatch()
+useEffect(()=>{
 
+},[])
   const sliderSettings = {
     dots: true,
     infinite: true,
@@ -177,7 +184,7 @@ const Home = () => {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section>mb 
 
             {/* Featured Products Section */}
             <section className="pb-16 bg-gradient-to-r from-white to-orange-50">
@@ -197,7 +204,7 @@ const Home = () => {
                             <p className="text-gray-600 mb-4">
                                 Handcrafted mala for meditation and spiritual growth.
                             </p>
-                           <div className='flex justify-evenly'>
+                           {/* <div className='flex justify-evenly'>
                            <Link
                                 to="#"
                                 className="bg-green-500 text-white px-4 py-1 rounded-full font-semibold hover:bg-green-600 transition duration-300"
@@ -210,7 +217,7 @@ const Home = () => {
                             >
                                 Add to cart
                             </Link>
-                           </div>
+                           </div> */}
                         </div>
 
                         {/* Product 2 */}
@@ -224,20 +231,7 @@ const Home = () => {
                             <p className="text-gray-600 mb-4">
                                 Elegant bracelet for daily wear and positive energy.
                             </p>
-                            <div className='flex justify-evenly'>
-                           <Link
-                                to="#"
-                                className="bg-green-500 text-white px-4 py-1 rounded-full font-semibold hover:bg-green-600 transition duration-300"
-                            >
-                                Buy Now
-                            </Link>
-                            <Link
-                                to="#"
-                                className="bg-orange-400 text-white px-2 py-1 rounded-full font-semibold hover:bg-orange-500 transition duration-300"
-                            >
-                                Add to cart
-                            </Link>
-                           </div>
+                    
                         </div>
 
                         {/* Product 3 */}
@@ -251,20 +245,7 @@ const Home = () => {
                             <p className="text-gray-600 mb-4">
                                 Stylish pendant for spiritual and fashion purposes.
                             </p>
-                            <div className='flex justify-evenly'>
-                           <Link
-                                to="#"
-                                className="bg-green-500 text-white px-4 py-1 rounded-full font-semibold hover:bg-green-600 transition duration-300"
-                            >
-                                Buy Now
-                            </Link>
-                            <Link
-                                to="#"
-                                className="bg-orange-400 text-white px-2 py-1 rounded-full font-semibold hover:bg-orange-500 transition duration-300"
-                            >
-                                Add to cart
-                            </Link>
-                           </div>
+                       
                         </div>
                         {/* Product 4 */}
                         <div className="bg-gradient-to-t from-orange-100 to-orange-300 p-3 rounded-lg hover:scale-105 transition duration-300" style={{boxShadow:  '21px 21px 22px #fb913c'}}>
@@ -277,20 +258,7 @@ const Home = () => {
                             <p className="text-gray-600 mb-4">
                                 Stylish Kada for spiritual and fashion purposes.
                             </p>
-                            <div className='flex justify-evenly'>
-                           <Link
-                                to="#"
-                                className="bg-green-500 text-white px-4 py-1 rounded-full font-semibold hover:bg-green-600 transition duration-300"
-                            >
-                                Buy Now
-                            </Link>
-                            <Link
-                                to="#"
-                                className="bg-orange-400 text-white px-2 py-1 rounded-full font-semibold hover:bg-orange-500 transition duration-300"
-                            >
-                                Add to cart
-                            </Link>
-                           </div>
+                        
                         </div>
                     </div>
                 </div>
