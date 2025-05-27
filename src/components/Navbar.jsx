@@ -1,13 +1,20 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
+import { setSearchQuery, setSearchResults } from '../redux/SearchSlice';
+
 
 const Navbar = () => {
 
-    const cartDetails = useSelector((state)=> state.cart)
-    // console.log(cartDetails)
+    const cartDetails = useSelector((state) => state.cart);
+   const products = useSelector((state) => state.product.products || state.product.items || []);
+    console.log(products)
+    const dispatch = useDispatch();
+    const navigate = useNavigate()
+
+    const [inputValue, setInputValue] = useState('');
     const [mobileOpen, setMobileOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const profileRef = useRef(null);
@@ -19,6 +26,29 @@ const Navbar = () => {
     const toggleProfile = () => {
         setProfileOpen(!profileOpen);
     };
+
+
+     const handleSearch = (e) => {
+        e.preventDefault();
+        const query = inputValue.toLowerCase();
+        dispatch(setSearchQuery(query));
+
+        // Add safety check for products array
+        if (!Array.isArray(products)) {
+            console.error('Products is not an array:', products);
+            dispatch(setSearchResults([]));
+            return;
+        }
+
+        const results = products.filter((product) =>
+            product?.name?.toLowerCase().includes(query) ||
+            product?.description?.toLowerCase().includes(query)
+        );
+
+        dispatch(setSearchResults(results));
+        navigate('/searchResult'); // Fixed typo in route name
+    };
+
 
     // Close profile dropdown when clicking outside
     useEffect(() => {
@@ -53,8 +83,13 @@ const Navbar = () => {
                         </div>
                         <div className="hidden md:flex items-center space-x-3">
                             <div className="relative">
-                                <input type="text" placeholder="Search" className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500" />
-                                <button className="absolute right-0 top-0 mt-2 mr-4">
+                                <input
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    type="search"
+                                    placeholder="Search"
+                                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500" />
+                                <button onClick={handleSearch} className="absolute right-0 top-0 mt-2 mr-4">
                                     <svg className="h-5 w-5 text-gray-500" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} viewBox="0 0 24 24" stroke="currentColor">
                                         <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
@@ -71,7 +106,7 @@ const Navbar = () => {
                                     <svg className="h-6 w-6 text-gray-100 hover:text-green-500 hover:scale-125 transition duration-300" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} viewBox="0 0 24 24" stroke="currentColor">
                                         <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
-                                  
+
                                 </button>
                                 {profileOpen && (
                                     <div className="absolute -right-10 mt-2 w-28 bg-white rounded-lg shadow-lg py-2 font-semibold">

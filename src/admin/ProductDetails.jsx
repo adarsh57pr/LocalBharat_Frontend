@@ -3,8 +3,12 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button, Modal } from 'antd';
 import { toast } from 'react-toastify';
+import { useDispatch, useSelector } from 'react-redux';
+import { setAllProducts } from '../redux/ProductSlice';
+
 
 const ProductDetails = () => {
+  const dispatch = useDispatch();
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -18,6 +22,7 @@ const ProductDetails = () => {
     try {
       const response = await axios.get('http://localhost:8000/products/getAllProducts');
       setProducts(response.data.products);
+      dispatch(setAllProducts(response.data.products))
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching products:', error);

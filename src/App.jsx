@@ -17,6 +17,7 @@ import ProductCreate from './admin/productCreate';
 import ProductDetails from './admin/ProductDetails';
 import CartPage from './pages/CartPage';
 import ForgetPassword from './pages/ForgetPassword';
+import SearchResults from './pages/SearchReasults';
 
 
 function App() {
@@ -29,8 +30,9 @@ function App() {
           <Route path='/register' element={<Register />} />
           <Route path='/contact' element={<Contact />} />
           <Route path='/shop' element={<Shop />} />
+          <Route path='/searchResult' element={<SearchResults />} />
           <Route path='/category' element={<Category />} />
-          <Route path='/viewDetails' element={<ViewDetails />} />
+          <Route path='/viewDetails/:id' element={<ViewDetails />} />
           <Route path='/card' element={<Card />} />
           <Route path='/cart' element={<CartPage />} />
           <Route path='/checkout' element={<Checkout />} />
